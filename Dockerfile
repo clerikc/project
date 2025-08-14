@@ -1,9 +1,5 @@
 FROM ubuntu:24.04
 
-# Устанавливаем базовые утилиты и Docker
-RUN apt-get update && apt-get install -y \
-    wget \
-    && rm -rf /var/lib/apt/lists/*
 
 # Устанавливаем kubectl (актуальная версия)
 RUN wget -qO- https://dl.k8s.io/release/$(wget -qO- https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl > /usr/local/bin/kubectl \
