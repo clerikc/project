@@ -4,7 +4,6 @@ FROM ubuntu:24.04
 RUN apt-get update && apt-get install -y \
     wget \
     sudo \
-    docker.io \
     && rm -rf /var/lib/apt/lists/*
 
 # Устанавливаем kubectl (актуальная версия)
