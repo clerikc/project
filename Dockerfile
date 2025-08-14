@@ -3,8 +3,6 @@ FROM ubuntu:24.04
 # 1. Сначала обновляем пакеты и ставим wget (теперь это делаем в одном RUN!)
 RUN apt-get update && apt-get install -y \
     wget \
-    sudo \
-    docker.io \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
