@@ -2,15 +2,24 @@ version: '3.8'
 
 services:
   k8s-manager:
-    build: .
+    build: 
+      context: .
+      dockerfile: Dockerfile
     container_name: k8s-manager
     privileged: true
-    network_mode: host  # Лучше для Minikube на Ubuntu 24.04
+    network_mode: host  # Обязательно для Minikube с драйвером docker
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./k8s-config:/k8s-config  # Для горячего редактирования конфигов
+      - ./k8s-config:/k8s-config
+      - minikube-data:/minikube  # Постоянное хранилище для Minikube
     environment:
       - MINIKUBE_HOME=/minikube
+      - KUBECONFIG=/minikube/.kube/config
     ports:
-      - "30080:30080"  # NodePort для приложения
+      - "30080:30080"  # Приложение
       - "30900:30900"  # Grafana
+      - "8443:8443"    # Kubernetes Dashboard (если используется)
+    restart: unless-stopped  # Автоперезапуск при падении
+
+volumes:
+  minikube-data:  # Для сохранения состояния Minikube между перезапусками
