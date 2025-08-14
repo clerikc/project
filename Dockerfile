@@ -26,8 +26,4 @@ COPY ./k8s-config /k8s-config
 COPY ./init-cluster.sh /init-cluster.sh
 RUN chmod +x /init-cluster.sh
 
-# 6. Фиксим DNS (на всякий случай)
-RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf \
-    && echo "nameserver 1.1.1.1" >> /etc/resolv.conf
-
-CMD ["/init-cluster.sh"]
+CMD ["./init-cluster.sh"]
