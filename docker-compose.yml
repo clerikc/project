@@ -1,25 +1,44 @@
 version: '3.8'
 
 services:
-  k8s-manager:
-    build: 
-      context: .
-      dockerfile: Dockerfile
-    container_name: k8s-manager
+  # Kind кластер
+  kind-control-plane:
+    image: kindest/node:v1.27.3
+    container_name: kind-control-plane
     privileged: true
-    network_mode: host  # Обязательно для Minikube с драйвером docker
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./k8s-config:/k8s-config
-      - minikube-data:/minikube  # Постоянное хранилище для Minikube
-    environment:
-      - MINIKUBE_HOME=/minikube
-      - KUBECONFIG=/minikube/.kube/config
-    ports:
-      - "30080:30080"  # Приложение
-      - "30900:30900"  # Grafana
-      - "8443:8443"    # Kubernetes Dashboard (если используется)
-    restart: unless-stopped  # Автоперезапуск при падении
+      - ./k8s:/k8s
+      - ./kind-config:/kind-config
+    command: >
+      /bin/sh -c "
+      kind create cluster --name local --config=/kind-config/kind-config.yaml --wait 5m &&
+      kubectl apply -f /k8s/app.yml &&
+      kubectl apply -f /k8s/prometheus.yml &&
+      kubectl apply -f /k8s/grafana.yml &&
+      tail -f /dev/null
+      "
+    networks:
+      - kind-net
 
-volumes:
-  minikube-data:  # Для сохранения состояния Minikube между перезапусками
+  # Утилита для управления кластером
+  kubectl:
+    image: bitnami/kubectl:latest
+    depends_on:
+      - kind-control-plane
+    volumes:
+      - ./k8s:/k8s
+      - ~/.kube:/root/.kube
+    entrypoint: >
+      /bin/sh -c "
+      kubectl cluster-info &&
+      kubectl get nodes &&
+      kubectl get pods -A &&
+      tail -f /dev/null
+      "
+    networks:
+      - kind-net
+
+networks:
+  kind-net:
+    driver: bridge

@@ -1,39 +1,37 @@
 #!/bin/bash
 
-while ! docker ps > /dev/null 2>&1; do
-    echo "Waiting for docker daemon..."
-    sleep 1
-done
+# Ожидание запуска SSH сервера
+sleep 5
 
-# Удаляем старый кластер (если был)
-minikube delete
+# Настройка окружения Minikube
+export MINIKUBE_HOME=/minikube
+export KUBECONFIG=$MINIKUBE_HOME/.kube/config
+export CHANGE_MINIKUBE_NONE_USER=true
 
-# Запускаем Minikube с Docker-драйвером
-minikube start --driver=docker --force
-eval $(minikube docker-env)
+# Очистка предыдущего кластера
+minikube delete --all --purge
 
-# Настраиваем доступ к Kubernetes API
-kubectl config use-context minikube
+# Запуск Minikube с исправленными параметрами
+minikube start \
+  --driver=docker \
+  --container-runtime=containerd \
+  --force \
+  --wait=all \
+  --wait-timeout=10m \
+  --alsologtostderr \
+  --v=5 \
+  --cpus=2 \
+  --memory=4G \
+  --disk-size=20GB \
+  --extra-config=kubelet.cgroup-driver=systemd
 
-# Устанавливаем Prometheus + Grafana через Helm
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
-  -f /k8s-config/prometheus-values.yaml \
-  --set grafana.service.type=NodePort \
-  --set grafana.service.nodePort=30900
+# Применение конфигураций
+kubectl apply -f /k8s-config/
 
-# Деплоим приложение
-kubectl apply -f /k8s-config/webapp-deployment.yaml
-
-# Ждём запуска подов
-echo "Ожидаем запуска Pods..."
-kubectl wait --for=condition=Ready pods --all --timeout=120s
-
-# Выводим информацию для доступа
-echo "=== Доступ к сервисам ==="
-echo "Grafana: http://$(minikube ip):30900 (логин: admin, пароль: admin)"
-echo "Приложение: http://$(minikube ip):30080"
-echo "Dashboard: $(minikube dashboard --url)"
+echo -e "\n=== Доступ к сервисам ==="
+echo "Grafana: http://localhost:30900 (admin/admin)"
+echo "Приложение: http://localhost:30080"
+echo "Dashboard: minikube dashboard --url"
 
 # Бесконечное ожидание
-sleep infinity
+tail -f /dev/null

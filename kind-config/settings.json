@@ -1,0 +1,9 @@
+{
+  "yaml.schemaStore.enable": true,
+  "yaml.schemas": {
+    "https://raw.githubusercontent.com/kubernetes-sigs/kind/main/site/content/docs/configuration/schema.json": "kind-config.yaml"
+  },
+  "files.associations": {
+    "kind-config.yaml": "yaml"
+  }
+}
